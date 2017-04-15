@@ -1,10 +1,17 @@
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CommandHandler
+from utils import load, clean_text
+from constants import labels
 import logging
 
 TOKEN = "367594980:AAH7lIPlY51RHMyTqolXxCPMqn9KkH2E-M0"
 
 user_states = {}
+
+clf = load('saved_clf.pkl')
+vect = load('vectorizer.pkl')
+
+print("All components loaded.")
 
 
 def start(bot, update):
@@ -19,21 +26,23 @@ def text(bot, update):
         user_states[chat_id] = 'PREDICT'
 
     if user_states[chat_id] == 'PREDICT':
-        if True:  # TODO check if
-            # TODO predict logic
-            msg = "Вас интересует <тема>. Да?"
+        if True:  # TODO check if non-fin
+            text = clean_text(update.message.text)
+            theme = clf.predict(vect.transform([text]))
+            msg = "Вас интересует тема \"" + labels[int(theme[0])] + "\". Да?"
             user_states[chat_id] = 'CHECK'
         else:
             msg = "Не похоже на фин текст. Попробуйте еще раз :)"
     else:
-        if update.message.text == 'нет':
+        if update.message.text.lower() == 'нет':
             msg = "Не смогли определить тему вашего вопроса. Попробуйте перефразировать вопрос"
         else:
-            msg = "Окей" # TODO msg assignment from theme
+            msg = "Окей"  # TODO msg assignment from theme
 
         user_states[chat_id] = 'PREDICT'
 
     bot.sendMessage(chat_id=update.message.chat_id, text=msg)
+
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
