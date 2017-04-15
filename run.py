@@ -1,17 +1,17 @@
+import telegram
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CommandHandler
 from utils import load, clean_text
-from constants import labels
+from constants import labels, common_requests
 import logging
 
 TOKEN = "367594980:AAH7lIPlY51RHMyTqolXxCPMqn9KkH2E-M0"
 
 user_states = {}
+user_themes = {}
 
 clf = load('saved_clf.pkl')
 vect = load('vectorizer.pkl')
-
-print("All components loaded.")
 
 
 def start(bot, update):
@@ -30,19 +30,32 @@ def text(bot, update):
         if True:  # TODO check if non-fin
             text = clean_text(update.message.text)
             theme = clf.predict(vect.transform([text]))
-            msg = "Вас интересует тема \"" + labels[int(theme[0])] + "\". Да?"
+
+            answer = int(theme[0])
+            user_themes[chat_id] = answer
+
+            msg += "Вас интересует тема \"" + labels[answer] + "\". Да?"
             user_states[chat_id] = 'CHECK'
+
+            custom_keyboard = [["Да"], ["Нет"]]
+            reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, one_time_keyboard=True)
+            bot.sendMessage(chat_id=chat_id, text=msg, reply_markup=reply_markup)
         else:
-            msg = "Не похоже на фин текст. Попробуйте еще раз :)"
+            msg += "Не похоже на фин текст. Попробуйте еще раз :)"
+            bot.sendMessage(chat_id=update.message.chat_id, text=msg)
     else:
         if update.message.text.lower() == 'нет':
-            msg = "Не смогли определить тему вашего вопроса. Попробуйте перефразировать вопрос"
+            msg += "Не смогли определить тему вашего вопроса. Попробуйте перефразировать вопрос"
         else:
-            msg = "В ближайшее время на ваш запрос ответит оператор."  # TODO msg assignment from theme
+            theme = user_themes.get(chat_id, '')
+            print(theme)
+            msg += common_requests.get(theme, '')
+            msg += "В ближайшее время на ваш запрос ответит оператор."
 
+        bot.sendMessage(chat_id=update.message.chat_id, text=msg)
+
+        user_themes[chat_id] = ''
         user_states[chat_id] = 'PREDICT'
-
-    bot.sendMessage(chat_id=update.message.chat_id, text=msg)
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -58,3 +71,5 @@ dispatcher.add_handler(start_handler)
 dispatcher.add_handler(echo_handler)
 
 updater.start_polling()
+
+print("All components was successfully loaded.")
