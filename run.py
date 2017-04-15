@@ -15,7 +15,8 @@ print("All components loaded.")
 
 
 def start(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
+    bot.sendMessage(chat_id=update.message.chat_id,
+                    text="Привет! Я могу помочь вам с вопросами в финансовой области. Прсто спросите!")
 
 
 def text(bot, update):
