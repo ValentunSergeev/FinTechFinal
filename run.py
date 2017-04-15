@@ -38,7 +38,7 @@ def text(bot, update):
         if update.message.text.lower() == 'нет':
             msg = "Не смогли определить тему вашего вопроса. Попробуйте перефразировать вопрос"
         else:
-            msg = "Окей"  # TODO msg assignment from theme
+            msg = "В ближайшее время на ваш запрос ответит оператор."  # TODO msg assignment from theme
 
         user_states[chat_id] = 'PREDICT'
 
