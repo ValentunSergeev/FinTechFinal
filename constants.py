@@ -19,5 +19,5 @@ right_ans = ['да', "конечно", "ага", "угадал", "точно", "
 wrong_ans = ['нет', 'никакая из этих тем не подходит', "неа", "не", "ошибаешься", "ошибка"]
 
 # TODO CHANGE TIMES TO NORMAL
-remind_time = 15
-off_time = 30
+remind_time = 30
+off_time = 210
