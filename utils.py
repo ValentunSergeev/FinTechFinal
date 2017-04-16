@@ -42,23 +42,19 @@ def load(file_name):
 
     return clf
 
-def get_results(clf,vectorizer,X):
-    a = sgd_clf.predict_proba(vectorizer.transform([X]))
+
+def get_results(clf, vectorizer, X):
+    a = clf.predict_proba(vectorizer.transform([X]))
     h = a[0]
     ans = {}
     for i in range(len(h)):
-        if h[i]>0.18:
-            ans[i]=h[i]
-    ans =  sorted(ans.items(), key=lambda x: x[1], reverse=True)
-    true_words = []
-    for word in ans[:4]:
-        true_words.append(word[0])
-    return true_words
+        ans[i] = h[i]
+    ans = sorted(ans.items(), key=lambda x: x[1], reverse=True)
+    return ans
 
 
 def check_credit(message, answer):
-    if answer = [10, 9]:
+    if answer == [10, 9]:
         return True
-    elif message = "не финансовое сообщение"
+    elif message == "не финансовое сообщение":
         return True
-
