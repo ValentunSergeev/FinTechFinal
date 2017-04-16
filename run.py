@@ -14,7 +14,7 @@ TOKEN = "367594980:AAH7lIPlY51RHMyTqolXxCPMqn9KkH2E-M0"
 
 user_states = {}
 user_themes = {}
-user_attempts = defaultdict(lambda: [0, 0]) # 0 - wrong theme number, 1 - wrong themes list
+user_attempts = defaultdict(lambda: [0, 0])  # 0 - wrong theme number, 1 - wrong themes list
 user_check_times = defaultdict(lambda: [0, True, "SINGLE"])  # time, is received, mode
 user_rephrase_times = defaultdict(lambda: [0, True])  # time, is received
 
@@ -31,25 +31,30 @@ def predict(bot, update):
     user_rephrase_times[chat_id][0] = 0
 
     if update.message.text.lower not in non_fin_words:  # TODO change check alg
-        # if len(user_themes[chat_id]) > 0:
-        #     results = user_themes[chat_id]
-        #     custom_keyboard = [[str(i + 1) + '. ' + labels[int(results[i][0])]] for i in range(4)]
-        #     custom_keyboard.append(["0. Никакая из этих тем не подходит"])
-        # else:
-        results = get_results(clf, vect, clean_text(update.message.text))  # TODO check if themes is empty
-        user_themes[chat_id] = [i[0] for i in results]
+        if len(user_themes.get(chat_id, [])) > 0:
+            if user_check_times[chat_id][2] == "SINGLE":
+                user_themes[chat_id] = user_themes[chat_id][1:]
+            else:
+                user_themes[chat_id] = user_themes[chat_id][4:]
 
-        if results[0][1] / results[1][1] > 3:
-            msg += "Вас интересует тема \"" + labels[int(results[0][0])] + "\". Да?"
             custom_keyboard = [["Да"], ["Нет"]]
-            mode = "SINGLE"
+            user_check_times[chat_id] = [time.time(), False, "SINGLE"]
+            msg += "Вас интересует тема \"" + labels[int(user_themes[chat_id][0])] + "\". Да?"
         else:
-            msg += "Пожалуйста, уточните, какая тема вас интересует(Введите номер или выбирите в списке)"
-            custom_keyboard = [[str(i + 1) + '. ' + labels[int(results[i][0])]] for i in range(4)]
-            custom_keyboard.append(["0. Никакая из этих тем не подходит"])
-            mode = "MULTIPLE"
+            results = get_results(clf, vect, clean_text(update.message.text))
+            user_themes[chat_id] = [i[0] for i in results]
 
-        user_check_times[chat_id] = [time.time(), False, mode]
+            if results[0][1] / results[1][1] > 3:
+                msg += "Вас интересует тема \"" + labels[int(results[0][0])] + "\". Да?"
+                custom_keyboard = [["Да"], ["Нет"]]
+                mode = "SINGLE"
+            else:
+                msg += "Пожалуйста, уточните, какая тема вас интересует(Введите номер или выбирите в списке)"
+                custom_keyboard = [[str(i + 1) + '. ' + labels[int(results[i][0])]] for i in range(4)]
+                custom_keyboard.append(["0. Никакая из этих тем не подходит"])
+                mode = "MULTIPLE"
+                user_check_times[chat_id] = [time.time(), False, mode]
+
         user_states[chat_id] = 'CHECK'
 
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
@@ -128,19 +133,26 @@ def text(bot, update):
             user_check_times[chat_id][0] = 0
             msg += "Не смогли определить тему вашего вопроса. Попробуйте перефразировать вопрос"
             user_rephrase_times[chat_id] = [time.time(), False]
-
+            if user_attempts[chat_id][1] == 2:
+                msg = "ОК, я запутался, давайте начнем заново :)"
+                user_attempts[chat_id][1] = 0
+                user_states[chat_id] = "PREDICT"
+            else:
+                user_attempts[chat_id][1] += 1
             bot.sendMessage(chat_id=update.message.chat_id, text=msg, reply_markup=ReplyKeyboardRemove())
-            user_states[chat_id] = 'PREDICT'  # TODO slice user_themes
-        elif update.message.text.lower()[0] not in ['1', '2', '3', '4', '0']:
+            user_states[chat_id] = 'PREDICT'
+        elif update.message.text.lower()[0] not in [str(i) for i in range(10)]:
             predict(bot, update)
         else:
             if user_attempts[chat_id][0] == 2:
                 msg = "ОК, похоже, мы оба запутались, давайте начнем заново :)"
                 user_attempts[chat_id][0] = 0
+                user_check_times[chat_id][0] = 0
                 user_states[chat_id] = "PREDICT"
             else:
-                msg += "Номер темы указан непрально."
+                msg += "Номер темы указан неправильно."
                 user_attempts[chat_id][0] += 1
+                user_check_times[chat_id][0] = time.time()
             bot.sendMessage(chat_id=update.message.chat_id, text=msg)
 
 
