@@ -14,6 +14,8 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.idea
+/__pycache__
+*.pyc
 
 # Windows shortcuts
 *.lnk
@@ -28,6 +30,7 @@ $RECYCLE.BIN/
 .DS_Store
 .AppleDouble
 .LSOverride
+
 
 # Thumbnails
 ._*
