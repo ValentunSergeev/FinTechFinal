@@ -29,6 +29,15 @@ def clean_text(text):  # just - test.text = test.text.apply(normalize)
     return text
 
 
+def is_finance(clf, vect, text):
+    proba = clf.predict_proba(vect.transform([text]))
+    ar = clf.predict_proba(vect.transform(['Ришат']))
+    if str(proba[0]) == str(ar[0]):
+        return False
+    else:
+        return True
+
+
 def save(clf, file_name='saved_clf.pkl'):
     from sklearn.externals import joblib
 

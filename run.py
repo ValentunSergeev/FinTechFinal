@@ -2,7 +2,7 @@ import telegram
 from telegram import ReplyKeyboardRemove
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CommandHandler
-from utils import load, clean_text, get_results
+from utils import load, clean_text, get_results, is_finance
 from constants import labels, common_requests, non_fin_words, cake, right_ans, wrong_ans, off_time, remind_time
 from collections import defaultdict
 from threading import Thread, Lock
@@ -30,7 +30,7 @@ def predict(bot, update):
 
     user_rephrase_times[chat_id][0] = 0
 
-    if update.message.text.lower not in non_fin_words:  # TODO change check alg
+    if update.message.text.lower() not in non_fin_words and is_finance(clf, vect, update.message.text):
         if len(user_themes.get(chat_id, [])) > 0:
             if user_check_times[chat_id][2] == "SINGLE":
                 user_themes[chat_id] = user_themes[chat_id][1:]
@@ -60,6 +60,7 @@ def predict(bot, update):
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
         bot.sendMessage(chat_id=chat_id, text=msg, reply_markup=reply_markup)
     else:
+        msg += "Не похоже не финансовый текст"
         msg += cake
         bot.sendMessage(chat_id=update.message.chat_id, text=msg)
 
@@ -150,7 +151,7 @@ def text(bot, update):
                 user_check_times[chat_id][0] = 0
                 user_states[chat_id] = "PREDICT"
             else:
-                msg += "Номер темы указан неправильно."
+                msg += "Номер темы указан неправильно. Уточните, какая тема вас интересует."
                 user_attempts[chat_id][0] += 1
                 user_check_times[chat_id][0] = time.time()
             bot.sendMessage(chat_id=update.message.chat_id, text=msg)
