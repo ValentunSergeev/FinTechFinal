@@ -18,6 +18,5 @@ cake = emojize(":cake:", use_aliases=True)
 right_ans = ['да', "конечно", "ага", "угадал", "точно", "верно"]
 wrong_ans = ['нет', 'никакая из этих тем не подходит', "неа", "не", "ошибаешься", "ошибка"]
 
-# TODO CHANGE TIMES TO NORMAL
 remind_time = 30
 off_time = 210
